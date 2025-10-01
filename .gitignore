@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite
+*.db
+
+# Environments
+.env
+.venv/
+.envrc
+
+# Data
+data/raw/
+data/processed/
+
+# Build / Packaging
+dist/
+build/
+*.egg-info/
