@@ -1,0 +1,42 @@
+{
+  "16184544517": {
+    "distance_km": 4.6,
+    "duration_min": 24.3,
+    "intensity": 9,
+    "intervals": [
+      {
+        "distance_km": 1.0,
+        "speed_kmh": 16.0,
+        "rest_sec": 90.0
+      },
+      {
+        "distance_km": 1.0,
+        "speed_kmh": 16.0,
+        "rest_sec": 90.0
+      },
+      {
+        "distance_km": 1.0,
+        "speed_kmh": 16.5,
+        "rest_sec": 90.0
+      },
+      {
+        "distance_km": 0.8,
+        "speed_kmh": 17.0,
+        "rest_sec": 90.0
+      },
+      {
+        "distance_km": 0.8,
+        "speed_kmh": 17.0,
+        "rest_sec": 90.0
+      }
+    ],
+    "notes": "",
+    "corrected_on": "2025-10-20T17:08:45.450564"
+  },
+  "16172318784": {
+    "distance_km": 5.0,
+    "duration_min": 26.983333333333334,
+    "intensity": 7,
+    "corrected_on": "2025-10-20T17:09:10.164676"
+  }
+}

@@ -4,8 +4,8 @@ import requests
 import pandas as pd
 from dotenv import load_dotenv
 from pathlib import Path
-from src.runlytics.data_ingest.strava_auth import refresh_access_token, update_env
-from src.runlytics.pipelines.indoor_handler import handle_indoor_run
+from runlytics.data_ingest.strava_auth import refresh_access_token, update_env
+from runlytics.pipelines.indoor_handler import handle_indoor_run
 
 load_dotenv()
 STRAVA_BASE = "https://www.strava.com/api/v3"
