@@ -16,6 +16,8 @@ fastapi = "^0.124.4"
 uvicorn = "^0.38.0"
 sqlalchemy = "^2.0.45"
 psycopg2-binary = "^2.9.11"
+matplotlib = "^3.10.8"
+seaborn = "^0.13.2"
 
 
 [tool.poetry.group.dev.dependencies]

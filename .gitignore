@@ -12,6 +12,7 @@ __pycache__/
 .envrc
 
 # Data
+data/
 data/raw/
 data/processed/
 

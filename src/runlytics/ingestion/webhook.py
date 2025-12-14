@@ -3,6 +3,7 @@ import logging
 from fastapi import FastAPI, Request, HTTPException, Security, Header
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.dialects.postgresql import insert
 
 # --- IMPORTS ---
 # Ensure these match your folder structure exactly
@@ -65,8 +66,12 @@ async def ingest_data(request: Request, api_key: str = Security(get_api_key)):
         # 1. Process Biometrics
         biometrics_data = parser.parse_biometrics()
         if biometrics_data:
-            # Using bulk_insert_mappings is much faster for thousands of rows
-            session.bulk_insert_mappings(Biometric, biometrics_data)
+            stmt = insert(Biometric).values(biometrics_data)
+            # "On Conflict Do Nothing" -> If duplicate found, skip it.
+            stmt = stmt.on_conflict_do_nothing(
+                index_elements=['date', 'type', 'source'] 
+            )
+            session.execute(stmt)
         
         # 2. Process Runs
         runs_data = parser.parse_workouts()
