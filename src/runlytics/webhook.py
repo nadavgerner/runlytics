@@ -6,10 +6,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import insert
 
 # --- IMPORTS ---
-from src.runlytics.database.models import Base, Run, Biometric
-from src.runlytics.processing.health_parser import HealthParser
-from src.runlytics.ingestion.journal_ingest import sync_journal_entry_point
-from src.runlytics.ingestion.strava_ingest import sync_strava_entry_point
+from runlytics.database.models import Base, Run, Biometric
+from runlytics.processing.health_parser import HealthParser
+from runlytics.ingestion.journal_ingest import sync_journal_entry_point
+from runlytics.ingestion.strava_ingest import sync_strava_entry_point
 
 # --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
