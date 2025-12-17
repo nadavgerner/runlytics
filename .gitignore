@@ -5,11 +5,13 @@ __pycache__/
 *.pyd
 *.sqlite
 *.db
+*.ipynb
 
 # Environments
 .env
 .venv/
 .envrc
+google_credentials.json
 
 # Data
 data/

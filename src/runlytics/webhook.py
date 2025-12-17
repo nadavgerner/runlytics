@@ -6,9 +6,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import insert
 
 # --- IMPORTS ---
-# Ensure these match your folder structure exactly
 from src.runlytics.database.models import Base, Run, Biometric
 from src.runlytics.processing.health_parser import HealthParser
+from src.runlytics.ingestion.journal_ingest import sync_journal_entry_point
+from src.runlytics.ingestion.strava_ingest import sync_strava_entry_point
 
 # --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
@@ -48,13 +49,15 @@ async def get_api_key(api_key_header: str = Header(None, alias=API_KEY_NAME)):
     return api_key_header
 
 # --- ROUTES ---
+
 @app.get("/")
 def health_check():
     return {"status": "online", "service": "Runlytics V5"}
 
+# 1. APPLE HEALTH TRIGGER
 @app.post("/ingest")
 async def ingest_data(request: Request, api_key: str = Security(get_api_key)):
-    """Receives JSON from Health Auto Export."""
+    """Receives JSON from Health Auto Export (iOS)."""
     if not SessionLocal:
         raise HTTPException(status_code=500, detail="Database not configured")
 
@@ -63,21 +66,19 @@ async def ingest_data(request: Request, api_key: str = Security(get_api_key)):
     session = SessionLocal()
 
     try:
-        # 1. Process Biometrics
+        # A. Process Biometrics
         biometrics_data = parser.parse_biometrics()
         if biometrics_data:
             stmt = insert(Biometric).values(biometrics_data)
-            # "On Conflict Do Nothing" -> If duplicate found, skip it.
             stmt = stmt.on_conflict_do_nothing(
                 index_elements=['date', 'type', 'source'] 
             )
             session.execute(stmt)
         
-        # 2. Process Runs
+        # B. Process Runs (Apple Watch)
         runs_data = parser.parse_workouts()
         if runs_data:
             for r_data in runs_data:
-                # Merge handles updates/duplicates (Upsert)
                 local_run = session.merge(Run(**r_data))
                 session.add(local_run)
 
@@ -85,13 +86,37 @@ async def ingest_data(request: Request, api_key: str = Security(get_api_key)):
         
         count_b = len(biometrics_data)
         count_r = len(runs_data)
-        logger.info(f"Ingestion Success: {count_b} metrics, {count_r} runs.")
+        logger.info(f"Apple Ingestion Success: {count_b} metrics, {count_r} runs.")
         
         return {"status": "success", "metrics_saved": count_b, "runs_saved": count_r}
 
     except Exception as e:
         session.rollback()
-        logger.error(f"Ingestion Error: {e}")
+        logger.error(f"Apple Ingestion Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         session.close()
+
+# 2. STRAVA TRIGGER
+@app.post("/sync/strava")
+async def trigger_strava(api_key: str = Security(get_api_key)):
+    """Triggers the Strava Python Script."""
+    try:
+        status_message = sync_strava_entry_point()
+        logger.info(f"Strava Trigger: {status_message}")
+        return {"status": "success", "message": status_message}
+    except Exception as e:
+        logger.error(f"Strava Trigger Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 3. JOURNAL TRIGGER
+@app.post("/sync/journal")
+async def trigger_journal(api_key: str = Security(get_api_key)):
+    """Triggers the Google Sheet Python Script."""
+    try:
+        status_message = sync_journal_entry_point()
+        logger.info(f"Journal Trigger: {status_message}")
+        return {"status": "success", "message": status_message}
+    except Exception as e:
+        logger.error(f"Journal Trigger Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

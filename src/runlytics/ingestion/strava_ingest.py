@@ -73,9 +73,10 @@ def fetch_activities(token, after_ts=0):
 def upload_to_supabase(activities, session):
     """
     Transforms raw Strava JSON into Run objects and bulk-inserts new ones.
+    Returns the count of new runs added.
     """
     if not activities:
-        return
+        return 0
 
     # 1. Fetch ALL existing dates from DB at once for fast duplicate checking
     print("Checking for duplicates...")
@@ -90,7 +91,10 @@ def upload_to_supabase(activities, session):
             continue
 
         # Parse date (Strava format: 2024-12-14T10:00:00Z)
-        run_date_raw = datetime.strptime(act['start_date_local'], "%Y-%m-%dT%H:%M:%SZ")
+        try:
+            run_date_raw = datetime.strptime(act['start_date_local'], "%Y-%m-%dT%H:%M:%SZ")
+        except ValueError:
+            continue
         
         # Skip if we already have this date
         if run_date_raw in existing_dates:
@@ -102,7 +106,7 @@ def upload_to_supabase(activities, session):
             distance_km=round(act['distance'] / 1000, 2),
             duration_min=round(act['moving_time'] / 60, 2),
             avg_hr=act.get('average_heartrate'),
-            max_hr=act.get('max_heartrate'), # Added per request
+            max_hr=act.get('max_heartrate'),
             energy_kcal=act.get('kilojoules'), 
             source="strava",
             route_json=act.get('map', {})
@@ -114,12 +118,19 @@ def upload_to_supabase(activities, session):
         session.add_all(new_runs)
         session.commit()
         print(f"Successfully uploaded {len(new_runs)} new runs to Supabase.")
+        return len(new_runs)
     else:
         print("No new runs to upload (all duplicates).")
+        return 0
 
-if __name__ == "__main__":
+def sync_strava_entry_point():
+    """
+    Wrapper for external calls (like from the webhook).
+    Returns a status message string.
+    """
     session = SessionLocal()
     try:
+        print("Starting Strava Sync...")
         # 1. Auth Init
         token = os.getenv("STRAVA_ACCESS_TOKEN")
         if not token:
@@ -131,12 +142,22 @@ if __name__ == "__main__":
         runs = fetch_activities(token, after_ts=last_ts)
 
         # 3. Database Write
+        count = 0
         if runs:
-            upload_to_supabase(runs, session)
+            count = upload_to_supabase(runs, session)
+            return f"Strava Sync Complete: {count} new runs added."
         else:
-            print("No new runs to sync.")
+            return "Strava Sync Complete: No new runs found."
 
     except Exception as e:
-        print(f"Script execution failed: {e}")
+        print(f"Strava Sync Failed: {e}")
+        raise e
     finally:
         session.close()
+
+if __name__ == "__main__":
+    try:
+        status = sync_strava_entry_point()
+        print(status)
+    except Exception as e:
+        print(f"Script execution failed: {e}")
