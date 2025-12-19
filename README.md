@@ -19,7 +19,7 @@ graph LR
     E -->|SQL Queries| F[Grafana Dashboards]
 ```
 
-## ⚙️ngineering Highlights
+## ⚙️Engineering Highlights
 
 ### 1. Automated ETL Pipeline
 * **Challenge:** Integrating disparate data sources (JSON payloads, REST APIs, Manual Logs) into a unified schema.
